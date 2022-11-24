@@ -99,9 +99,9 @@ public class WebDriverManager {
 
         var fullVersion = executeCheckVersionChrome();
 
-        var correctVersion = fullVersion.substring(
-                0,
-                fullVersion.length() - 3
+        var correctVersion = fullVersion.replaceAll(
+                "." + fullVersion.split("\\.")[3],
+                ""
         );
 
         logger.debug("Определена версия [ " + correctVersion + " ] для установленного Google Chrome");
