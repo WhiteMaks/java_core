@@ -23,6 +23,10 @@
         </encoder>
     </appender>
 
+    <logger name="org.hibernate" level="off"/>
+
+    <logger name="SQL dialect" level="warn"/>
+
     <logger name="org" level="warn"/>
 
     <logger name="io" level="warn"/>

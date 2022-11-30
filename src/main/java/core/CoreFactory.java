@@ -4,15 +4,13 @@ import core.enums.BrowserType;
 import core.supports.CustomBrowser;
 import core.supports.CustomJsonParser;
 import core.supports.CustomLogger;
-import core.utils.WebDriverManager;
 import core.utils.OperationSystem;
 import core.utils.WebDriverManager;
 import core.utils.cmd.kubectl.Kubectl;
 import core.wrappers.DatabaseDriver;
 import core.wrappers.RestApi;
-import core.wrappers.WebDriver;
 import core.wrappers.impl.ExtGson;
-import core.wrappers.impl.ExtJDBCDriver;
+import core.wrappers.impl.ExtHibernateDriver;
 import core.wrappers.impl.ExtLogback;
 import core.wrappers.impl.ExtRestAssured;
 import core.wrappers.impl.ExtSeleniumDriver;
@@ -60,7 +58,7 @@ public final class CoreFactory {
     }
 
     public DatabaseDriver createDatabaseDriver() {
-        return new ExtJDBCDriver();
+        return new ExtHibernateDriver();
     }
 
     public CustomBrowser createBrowser(BrowserType browserType) {
