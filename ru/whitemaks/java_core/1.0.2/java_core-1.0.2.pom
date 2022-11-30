@@ -6,7 +6,7 @@
 
     <groupId>ru.whitemaks</groupId>
     <artifactId>java_core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -21,6 +21,7 @@
         <junitplatform.version>1.9.0</junitplatform.version>
         <selenuim.version>4.6.0</selenuim.version>
         <restassured.version>5.3.0</restassured.version>
+        <hibernate.version>6.1.5.Final</hibernate.version>
 
         <github.global.server>github</github.global.server>
         <github.maven-plugin>0.12</github.maven-plugin>
@@ -141,6 +142,13 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
+        </dependency>
+
+        <!--Библиотека для работы с базой данных-->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
         </dependency>
     </dependencies>
 
