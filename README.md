@@ -20,7 +20,7 @@ Add dependency to pom.xml.
     <dependency>
         <groupId>ru.whitemaks</groupId>
         <artifactId>java_core</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </dependency>
 </dependencies>
 ```
