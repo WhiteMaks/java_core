@@ -10,7 +10,7 @@ import core.utils.cmd.kubectl.Kubectl;
 import core.wrappers.DatabaseDriver;
 import core.wrappers.RestApi;
 import core.wrappers.impl.ExtGson;
-import core.wrappers.impl.ExtHibernateDriver;
+import core.wrappers.impl.ExtJdbcDriver;
 import core.wrappers.impl.ExtLogback;
 import core.wrappers.impl.ExtRestAssured;
 import core.wrappers.impl.ExtSeleniumDriver;
@@ -58,7 +58,7 @@ public final class CoreFactory {
     }
 
     public DatabaseDriver createDatabaseDriver() {
-        return new ExtHibernateDriver();
+        return new ExtJdbcDriver();
     }
 
     public CustomBrowser createBrowser(BrowserType browserType) {

@@ -30,11 +30,17 @@ public class SQLResponse {
     }
 
     public Object getColumn(String columnName, int rowIndex) {
-        return rows.get(rowIndex).getDate().get(findPositionColumn(columnName));
+        return rows.get(rowIndex)
+                .getDate()
+                .get(findPositionColumn(columnName));
     }
 
     private int findPositionColumn(String columnName) {
-        return columns.stream().filter(column -> column.getName().equals(columnName)).findFirst().get().getPosition();
+        return columns.stream()
+                .filter(column -> column.getName().equals(columnName))
+                .findFirst()
+                .get()
+                .getPosition();
     }
 
     public final class Row {

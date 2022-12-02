@@ -1,7 +1,6 @@
 package core.utils;
 
 import core.annotations.Column;
-import core.annotations.Id;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -64,9 +63,7 @@ public class ObjectMapper<T> {
         var result = new HashMap<String, Object>();
         for (Field field : object.getClass().getDeclaredFields()) {
             field.setAccessible(true);
-            if (field.getAnnotation(Id.class) == null) {
-                result.put(getColumnName(field), field.get(object));
-            }
+            result.put(getColumnName(field), field.get(object));
         }
         return result;
     }
