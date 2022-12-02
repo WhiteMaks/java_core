@@ -4,16 +4,13 @@ import core.CoreFactory;
 import core.annotations.Id;
 import core.annotations.TableName;
 import core.utils.ObjectMapper;
-import core.utils.SQLRequest;
 import core.wrappers.DatabaseDriver;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public abstract class CustomDatabase {
     private final static CustomLogger logger = CoreFactory.getInstance().createLogger(CustomDatabase.class);
@@ -25,111 +22,99 @@ public abstract class CustomDatabase {
         connect(url, username, password);
     }
 
-    public <T> List<T> selectAll(Class<T> responseClass) {
-        return selectAll(null, responseClass);
+    public <T> void delete(T object) {
+        delete(Collections.singletonList(object));
     }
 
-    public <T> List<T> selectAll(String param, Class<T> responseClass) {
-        return selectAll(param, null, responseClass);
+    public <T> void delete(List<T> objects) {
+        var queries = generateQueriesForDelete(objects);
+
+        databaseDriver.delete(queries);
     }
 
-    public <T> List<T> selectAll(String param, String orderByParam, Class<T> responseClass) {
-        return selectAll(getCurrentTableName(responseClass), param, orderByParam, responseClass);
+    public <T> void update(T object) {
+        update(Collections.singletonList(object));
     }
 
-    private <T> List<T> selectAll(String tableName, String param, String orderByParam, Class<T> responseClass) {
-        List<T> result = new ArrayList<>();
-        try {
-            databaseDriver.executeSQLQuery(
-                    new SQLRequest()
-                            .select()
-                            .from(tableName)
-                            .where(param)
-                            .orderBy(orderByParam)
-            );
-            logger.trace("Выполнен SQL запрос [ " + databaseDriver.getLastSQLRequest() + " ]");
-            result = databaseDriver.getResponse().mapToObjects(responseClass);
-        } catch (Exception ex) {
-            logger.error("Ошибка выполнения SQL запроса [ " + databaseDriver.getLastSQLRequest() + " ]", ex);
+    public <T> void update(List<T> objects) {
+        var queries = generateQueriesForUpdate(objects);
+
+        databaseDriver.update(queries);
+    }
+
+    public <T> T insert(T object) {
+        var entities = insert(Collections.singletonList(object));
+
+        if (entities.size() == 0) {
+            return null;
         }
-        logger.trace("В результате выполнения SQL запроса [ " + databaseDriver.getLastSQLRequest() + " ] найдено [ " + result.size() + " ] записей");
+
+        return entities.get(0);
+    }
+
+    public <T> List<T> insert(List<T> objects) {
+        var result = new ArrayList<T>();
+
+        var queries = generateQueriesForInsert(objects);
+
+        var ids = databaseDriver.insert(queries);
+
+        for (int i = 0; i < ids.size(); i++) {
+            var clazz = (Class<T>) objects.get(i)
+                    .getClass();
+
+            var entity = selectById(
+                    Long.valueOf(ids.get(i)),
+                    clazz
+            );
+
+            result.add(entity);
+        }
+
         return result;
     }
 
-    public <T> T selectById(Object id, Class<T> responseClass) {
-        var param = getIdParam(responseClass);
-        return selectOne(param + " = " + id, responseClass);
-    }
+    public <T> T selectById(Object id, Class<T> clazz) {
+        var idFieldName = getIdParam(clazz);
 
-    public <T> T selectOne(Class<T> responseClass) {
-        return selectOne(null, responseClass);
-    }
+        var rows = customSelect(
+                "where " +
+                        idFieldName +
+                        " = " +
+                        getColumnValue(id),
+                clazz
+        );
 
-    public <T> T selectOne(String param, Class<T> responseClass) {
-        List<T> allRows = selectAll(getCurrentTableName(responseClass), param, null, responseClass);
-        return allRows.size() > 0 ? allRows.get(0) : null;
-    }
-
-    public <T> T selectOne(String param, String orderByParam, Class<T> responseClass) {
-        List<T> allRows = selectAll(getCurrentTableName(responseClass), param, orderByParam, responseClass);
-        return allRows.size() > 0 ? allRows.get(0) : null;
-    }
-
-    public <T> T insert(Object object, Class<T> responseClass) {
-        String id = null;
-        try {
-            Map<String, Object> unmap = ObjectMapper.unmap(object);
-            id = databaseDriver.executeSQLQueryUpdate(
-                    new SQLRequest()
-                            .insert()
-                            .into(getCurrentTableName(object.getClass()), unmap.keySet().toArray(new String[0]))
-                            .values(generateValues(unmap.values()))
-            );
-            logger.trace("Выполнен SQL запрос [ " + databaseDriver.getLastSQLRequest() + " ]");
-        } catch (Exception ex) {
-            logger.error("Ошибка выполнения SQL запроса [ " + databaseDriver.getLastSQLRequest() + " ]", ex);
+        if (rows.size() == 0) {
+            return null;
         }
-        return selectById(id, responseClass);
+
+        return rows.get(0);
     }
 
-    public <T> void insertTransaction(List<?> objects, Class<T> responseClass) {
-        try {
-            logger.debug("Открытие транзакции на добавление [ " + objects.size() + " ] новых записей");
-            databaseDriver.openTransaction();
-            for (Object object : objects) {
-                insert(object, responseClass);
-            }
-            logger.debug("Фиксирование транзакции на добавление [ " + objects.size() + " ] новых записей");
-            databaseDriver.commitTransaction();
-        } catch (Exception ex) {
-            logger.error("Ошибка выполнения добавления записей [ " + objects.size() + " ] строк", ex);
-            try {
-                logger.debug("Откат транзакции выполнения транзакции");
-                databaseDriver.rollbackTransaction();
-            } catch (Exception e) {
-                logger.error("Ошибка отмены транзакции...", ex);
-            }
-        }
+    public <T> List<T> selectAll(Class<T> clazz) {
+        return customSelect(
+                "",
+                clazz
+        );
     }
 
-    public <T> int deleteById(Object id, Class<T> clazz) {
-        var param = getIdParam(clazz);
-        try {
-            String s = databaseDriver.executeSQLQueryUpdate(
-                    new SQLRequest()
-                            .delete()
-                            .from(getCurrentTableName(clazz))
-                            .where(param + " = " + id)
-            );
-            return Integer.parseInt(s);
-        } catch (Exception ex) {
-            logger.error("Ошибка выполнения удаления записи", ex);
-            return 0;
+    public <T> List<T> customSelect(String query, Class<T> clazz) {
+        return databaseDriver.select(
+                "select * from " + getCurrentTableName(clazz) + " " + query,
+                clazz
+        );
+    }
+
+    private String getColumnValue(Object value) {
+        if (value instanceof Number) {
+            return String.valueOf(value);
         }
+        return "'" + value + "'";
     }
 
     private <T> String getIdParam(Class<T> clazz) {
-        Optional<Field> first = Arrays.stream(clazz.getDeclaredFields())
+        var first = Arrays.stream(clazz.getDeclaredFields())
                 .filter(field -> {
                     field.setAccessible(true);
                     return field.getAnnotation(Id.class) != null;
@@ -139,22 +124,6 @@ public abstract class CustomDatabase {
             return ObjectMapper.getColumnName(first.get());
         }
         return "id";
-    }
-
-    private String[] generateValues(Collection<Object> objects) {
-        List<String> resultList = new ArrayList<>();
-        for (Object object : objects) {
-            if (object instanceof Number) {
-                resultList.add(String.valueOf(object));
-            } else {
-                if (object == null) {
-                    resultList.add("null");
-                } else {
-                    resultList.add("'" + object + "'");
-                }
-            }
-        }
-        return resultList.toArray(new String[0]);
     }
 
     private String getCurrentTableName(Class<?> responseClass) {
@@ -179,5 +148,155 @@ public abstract class CustomDatabase {
                 Common.sleep(2000);
             }
         }
+    }
+
+    private void addArrayInQuery(StringBuilder builder, String[] array) {
+        for (var data : array) {
+            if (data != null) {
+                builder.append(data).append(",").append(" ");
+            }
+        }
+    }
+
+    private String[] generateValues(Collection<Object> objects) {
+        List<String> resultList = new ArrayList<>();
+        for (Object object : objects) {
+            if (object instanceof Number) {
+                resultList.add(String.valueOf(object));
+            } else {
+                if (object == null) {
+                    resultList.add("null");
+                } else {
+                    resultList.add("'" + object + "'");
+                }
+            }
+        }
+        return resultList.toArray(new String[0]);
+    }
+
+    private <T> List<String> generateQueriesForInsert(List<T> objects) {
+        var result = new ArrayList<String>();
+
+        for (T object : objects) {
+            var query = new StringBuilder();
+
+            try {
+                var unmap = ObjectMapper.unmap(object);
+                unmap.remove(getIdParam(object.getClass()));
+
+                query.append("insert into ")
+                        .append(getCurrentTableName(object.getClass()))
+                        .append(" (");
+
+                addArrayInQuery(query, unmap.keySet().toArray(new String[0]));
+
+                var length = query.toString().length();
+
+                query.delete(length - 2, length);
+                query.append(")")
+                        .append(" ");
+
+                query.append("values").append("(");
+                addArrayInQuery(
+                        query,
+                        generateValues(unmap.values())
+                );
+
+                length = query.toString().length();
+                query.delete(length - 2, length);
+                query.append(")");
+
+                result.add(query.toString());
+            } catch (Exception ex) {
+                logger.error(
+                        ex.getMessage(),
+                        ex
+                );
+            }
+        }
+        return result;
+    }
+
+    private <T> List<String> generateQueriesForUpdate(List<T> objects) {
+        var result = new ArrayList<String>();
+
+        for (T object : objects) {
+            var query = new StringBuilder();
+
+            try {
+                var unmap = ObjectMapper.unmap(object);
+
+                query.append("update ")
+                        .append(getCurrentTableName(object.getClass()))
+                        .append(" set ");
+
+                var idParam = getIdParam(object.getClass());
+                var idValue = getColumnValue(unmap.get(idParam));
+
+                unmap.remove(idParam);
+
+                var array = new String[unmap.size()];
+
+                var keySet = unmap.keySet().toArray(new String[0]);
+
+                for (int i = 0; i < unmap.size(); i++) {
+                    array[i] = keySet[i] + "=" + getColumnValue(unmap.get(keySet[i]));
+                }
+
+                addArrayInQuery(query, array);
+
+                var length = query.toString().length();
+
+
+                query.delete(length - 2, length);
+                query.append(" where ")
+                        .append(idParam)
+                        .append(" = ")
+                        .append(idValue);
+
+                result.add(query.toString());
+            } catch (Exception ex) {
+                logger.error(
+                        ex.getMessage(),
+                        ex
+                );
+            }
+        }
+        return result;
+    }
+
+    private <T> List<String> generateQueriesForDelete(List<T> objects) {
+        var result = new ArrayList<String>();
+
+        for (T object : objects) {
+            var query = new StringBuilder();
+
+            try {
+                var unmap = ObjectMapper.unmap(object);
+
+                var idParam = getIdParam(object.getClass());
+                var idValue = getColumnValue(unmap.get(idParam));
+
+                query.append("delete ")
+                        .append("from ")
+                        .append(getCurrentTableName(object.getClass()))
+                        .append(" where ")
+                        .append(idParam)
+                        .append(" = ")
+                        .append(idValue);
+
+                result.add(query.toString());
+            } catch (Exception ex) {
+                logger.error(
+                        ex.getMessage(),
+                        ex
+                );
+            }
+        }
+        return result;
+    }
+
+    public DatabaseDriver getDatabaseDriver() {
+        return databaseDriver;
     }
 }

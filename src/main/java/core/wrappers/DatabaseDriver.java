@@ -1,28 +1,17 @@
 package core.wrappers;
 
-import core.utils.SQLRequest;
-import core.utils.SQLResponse;
+import java.util.List;
 
 public interface DatabaseDriver {
 
     void openConnection(String url, String username, String password) throws Exception;
 
-    void closeConnection() throws Exception;
+    <T> List<T> select(String query, Class<T> t);
 
-    void openTransaction() throws Exception;
+    List<String> insert(List<String> queries);
 
-    void commitTransaction() throws Exception;
+    void update(List<String> queries);
 
-    void rollbackTransaction() throws Exception;
-
-    String executeSQLQueryUpdate(SQLRequest sqlRequest) throws Exception;
-
-    boolean executeSQLQuery(SQLRequest sqlRequest) throws Exception;
-
-    boolean isConnected();
-
-    SQLResponse getResponse() throws Exception;
-
-    String getLastSQLRequest();
+    void delete(List<String> queries);
 
 }
