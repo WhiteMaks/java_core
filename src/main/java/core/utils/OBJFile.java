@@ -12,25 +12,6 @@ public class OBJFile {
     private final List<Integer> indices;
     private final List<Face> faces;
 
-    public static void main(String[] args) {
-        new OBJFile("# Blender 3.3.1\n" +
-                "# www.blender.org\n" +
-                "mtllib vertical_plan.mtl\n" +
-                "o Plane\n" +
-                "v -0.000000 1.000000 1.000000\n" +
-                "v 0.000000 -1.000000 1.000000\n" +
-                "v -0.000000 1.000000 -1.000000\n" +
-                "v 0.000000 -1.000000 -1.000000\n" +
-                "vn 1.0000 -0.0000 -0.0000\n" +
-                "vt 0.000000 0.000000\n" +
-                "vt 1.000000 0.000000\n" +
-                "vt 0.000000 1.000000\n" +
-                "vt 1.000000 1.000000\n" +
-                "s 0\n" +
-                "f 2/2/1 3/3/1 1/1/1\n" +
-                "f 2/2/1 4/4/1 3/3/1\n").parse();
-    }
-
     public OBJFile(String body) {
         this.body = body;
 
@@ -118,11 +99,17 @@ public class OBJFile {
         }
 
         for (int i = 0; i < tempTextureCoordinates.length; i++) {
-            textureCoordinates.add(i, tempTextureCoordinates[i]);
+            textureCoordinates.add(
+                    i,
+                    tempTextureCoordinates[i]
+            );
         }
 
         for (int i = 0; i < tempNormals.length; i++) {
-            normals.add(i, tempNormals[i]);
+            normals.add(
+                    i,
+                    tempNormals[i]
+            );
         }
     }
 
