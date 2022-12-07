@@ -2,7 +2,7 @@ package core.supports;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Randomizer {
+public final class Randomizer {
 
     public static int getPositiveInt() {
         return ThreadLocalRandom.current()
