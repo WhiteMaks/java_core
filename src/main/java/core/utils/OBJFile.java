@@ -1,16 +1,22 @@
 package core.utils;
 
+import core.CoreFactory;
+import core.supports.CustomLogger;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class OBJFile {
+    private final static CustomLogger logger = CoreFactory.getInstance().createLogger(OBJFile.class);
+
     private final String body;
 
     private final List<Float> positions;
-    private final List<Float> textureCoordinates;
-    private final List<Float> normals;
     private final List<Integer> indices;
     private final List<Face> faces;
+
+    private List<Float> textureCoordinates;
+    private List<Float> normals;
 
     public OBJFile(String body) {
         this.body = body;
@@ -98,18 +104,15 @@ public class OBJFile {
             }
         }
 
-        for (int i = 0; i < tempTextureCoordinates.length; i++) {
-            textureCoordinates.add(
-                    i,
-                    tempTextureCoordinates[i]
-            );
+        textureCoordinates = new ArrayList<>();
+        normals = new ArrayList<>();
+
+        for (float tempTextureCoordinate : tempTextureCoordinates) {
+            textureCoordinates.add(tempTextureCoordinate);
         }
 
-        for (int i = 0; i < tempNormals.length; i++) {
-            normals.add(
-                    i,
-                    tempNormals[i]
-            );
+        for (float tempNormal : tempNormals) {
+            normals.add(tempNormal);
         }
     }
 
