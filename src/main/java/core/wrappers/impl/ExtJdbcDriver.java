@@ -48,10 +48,18 @@ public class ExtJdbcDriver implements DatabaseDriver {
 
             result = response.mapToObjects(t);
         } catch (Exception ex) {
-            logger.error(
-                    ex.getMessage(),
-                    ex
-            );
+            try {
+                result = new ArrayList<>();
+
+                connection.rollback();
+
+                logger.error(
+                        ex.getMessage(),
+                        ex
+                );
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
         return result;
     }
