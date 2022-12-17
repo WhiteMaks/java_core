@@ -30,7 +30,7 @@ public class ExtJdbcDriver implements DatabaseDriver {
 
     @Override
     public <T> List<T> select(String query, Class<T> t) {
-        List<T> result = new ArrayList<T>();
+        List<T> result;
 
         try {
             var statement = connection.createStatement();
