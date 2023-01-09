@@ -3,6 +3,7 @@ package core.utils;
 import core.CoreFactory;
 import core.supports.CustomLogger;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,10 @@ public class OBJFile {
         for (var line : body.split("\n")) {
             var params = line.split("\\s+");
 
+            if (params.length == 0) {
+                continue;
+            }
+
             switch (params[0]) {
                 case "v" -> {
                     positions.add(Float.parseFloat(params[1]));
@@ -60,6 +65,7 @@ public class OBJFile {
 
                 default -> {}
             }
+
         }
 
         updateArrayData();
